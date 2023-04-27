@@ -12,7 +12,7 @@ use diesel_async::{
 use axum::response::Response;
 use serde_json::json;
 use tokio::task::JoinHandle;
-use tower_http::limit::RequestBodyLimitLayer;
+use tower_http::{limit::RequestBodyLimitLayer, cors::Any};
 use std::{net::SocketAddr, time::Duration, collections::HashMap, sync::{Arc, Mutex}};
 mod methods;
 
@@ -21,7 +21,7 @@ mod models;
 mod handler;
 mod middleware;
 mod config;
-
+use tower_http::cors::CorsLayer;
 type Pool = bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
 // type Pool=Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
 #[tokio::main]
@@ -52,7 +52,9 @@ async fn main() {
     let app = Router::new()
         .merge(auth_routes)
         .merge(noauth_routes)   
+        .layer(CorsLayer::new().allow_origin(Any).allow_headers(Any))
         .with_state(pool);
+    
         // .layer(axum::middleware::from_fn(middleware::my_middleware1))
         // .layer(axum::middleware::from_fn(middleware::my_middleware2));
     // run it with hyper

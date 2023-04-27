@@ -35,14 +35,17 @@ pub async fn create_user(State(pool): State<Pool>,Json(mut info):Json<CreateUser
 }
 
 pub async fn login(State(pool): State<Pool>,Json(info):Json<Login>)->Result<impl IntoResponse,AppError>{
+    println!("我收到了login请求");
     let mut conn=get_connection(&pool).await?;
     let user=users::table.filter(username.eq(info.username).and(password.eq(info.password)))
             .load::<User>(&mut conn)
             .await
             .map_err(|e| AppError::err(500,e.to_string()))?;
     if user.len()<1{
+        
         Err(AppError::err(500,"账号或密码错误".to_string()))
     }else{
+        println!("我马上返回了");
         let claims=Claims{
             uuid:user[0].uuid.clone(),
             username:user[0].username.clone(),
