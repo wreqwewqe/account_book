@@ -1,7 +1,7 @@
 
 use diesel::prelude::*;
 use crate::schema::orders;
-#[derive(Debug,serde::Deserialize,Queryable)]
+#[derive(Debug,serde::Deserialize,serde::Serialize,Queryable)]
 #[diesel(table_name=orders)]
 pub struct Order{
     pub id:i32,
@@ -28,4 +28,11 @@ pub struct UpdateOrder{
     pub id:i32,
     pub amount:i32,
     pub status:bool,
+}
+
+
+#[derive(Debug,serde::Deserialize)]
+pub struct QueryOrder{
+    pub pagenum:i64,
+    pub pagesize:i64
 }

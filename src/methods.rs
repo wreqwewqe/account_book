@@ -13,6 +13,7 @@ pub fn now()->String{
 }
 
 pub fn my_decode(auth:Authorization<Bearer>)->Result<Claims,AppError>{
+    println!("auth:{:?}",auth);
     decode::<Claims>(&auth.token(), &DecodingKey::from_secret("secret".as_ref()), &Validation::default()).map_err(|e| AppError::err(500,e.to_string())).and_then(|e| Ok(e.claims))
 }
 

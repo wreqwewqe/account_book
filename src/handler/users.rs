@@ -56,7 +56,8 @@ pub async fn login(State(pool): State<Pool>,Json(info):Json<Login>)->Result<impl
         Ok(Json(json!({
             "code":200,
             "msg":"登录成功",
-            "token":token
+            "token":token,
+            "uuid":user[0].uuid
         })))
     }
    

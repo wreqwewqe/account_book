@@ -12,7 +12,8 @@ diesel::table! {
         id->Integer,
         parent_uuid->Text,
         customer_name->Text,
-        total_debts->Integer, 
+        phone->Nullable<Text>,
+        total_debts->Nullable<Integer>, 
     }
 }
 
