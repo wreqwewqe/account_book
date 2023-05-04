@@ -1,7 +1,8 @@
 use diesel::prelude::*;
 
+
 use crate::schema::users;
-#[derive(Debug,serde::Deserialize,Queryable)]
+#[derive(Debug,serde::Deserialize,Queryable,serde::Serialize)]
 pub struct User{
     pub uuid:String,
     pub username:String,
@@ -25,4 +26,10 @@ pub struct CreateUser{
 pub struct Login{
     pub username:String,
     pub password:String,
+}
+
+//根据uuid获取当前用户信息
+#[derive(Debug,serde::Deserialize)]
+pub struct CurrentUserInfo{
+    pub parent_uuid:String
 }

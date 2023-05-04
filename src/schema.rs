@@ -24,5 +24,6 @@ diesel::table! {
         amount->Integer,
         status->Bool,
         create_at->Text,   
+        remark->Nullable<Text>,
     }
 }

@@ -37,6 +37,7 @@ async fn main() {
     // build our application with some routes
 
     let auth_routes=Router::new()
+        .route("/users/info",post(handler::users::currentUserInfo))
         .route("/customer/create",post(handler::customers::create_customer))
         .route("/customer/list",post(handler::customers::customer_list))
         .route("/customer/update",post(handler::customers::update_customer))
@@ -44,6 +45,7 @@ async fn main() {
         .route("/orders/create",post(handler::orders::create))
         .route("/orders/update",post(handler::orders::update))
         .route("/orders/list",post(handler::orders::list))
+        // .route("/test",post(handler::orders::test))
         .layer(axum::middleware::from_fn(middleware::auth));
 
     let noauth_routes=Router::new()

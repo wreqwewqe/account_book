@@ -4,7 +4,7 @@ use axum::{extract::{self, State}, response::IntoResponse, Json};
 use jsonwebtoken::{encode, Header, EncodingKey};
 use serde_json::json;
 
-use crate::{config::AppError, methods::{get_connection, now}, models::users::{CreateUser, Login, User}, schema::users::{self, username, password}};
+use crate::{config::AppError, methods::{get_connection, now}, models::users::{CreateUser, Login, User, CurrentUserInfo}, schema::users::{self, username, password}};
 use diesel::prelude::*;
 use uuid::Uuid;
 use crate::Pool;
@@ -57,8 +57,28 @@ pub async fn login(State(pool): State<Pool>,Json(info):Json<Login>)->Result<impl
             "code":200,
             "msg":"登录成功",
             "token":token,
-            "uuid":user[0].uuid
+            "uuid":user[0].uuid,
+            "username":user[0].username
         })))
     }
    
+}
+
+
+//获取当前用户的信息
+pub async fn currentUserInfo(State(pool):State<Pool>,Json(info):Json<CurrentUserInfo>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&pool).await?;
+    println!("连接建立成功");
+    let res=users::table
+        .filter(users::uuid.eq(info.parent_uuid))
+        .first::<User>(&mut conn)
+        .await
+        .map_err(|e| AppError::err(500,e.to_string()))?;
+    Ok(Json(json!({
+        "code":200,
+        "msg":"请求成功",
+        "data":{
+            "info":res,
+        }
+    })))
 }
