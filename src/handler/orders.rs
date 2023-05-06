@@ -7,7 +7,7 @@ use diesel::prelude::*;
 use crate::config::AppError;
 use crate::Pool;
 use crate::methods::{get_connection, now};
-use crate::models::orders::{CreateOrder, UpdateOrder, Order, QueryOrder, CountOrder};
+use crate::models::orders::{CreateOrder, UpdateOrder, Order, QueryOrder, CountOrder, DeleteOrder};
 use crate::schema::customers::{self,customer_name};
 use crate::schema::orders::{self,id, amount,status,customer_id,create_at, remark};
 
@@ -82,6 +82,18 @@ pub async fn list(State(pool):State<Pool>,Json(info):Json<QueryOrder>)->Result<i
             "lists":lists,
             "total":total.len()
         }
+    })))
+}
+
+pub async fn delete(State(pool):State<Pool>,Json(info):Json<DeleteOrder>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&pool).await?;
+    let r=diesel::delete(orders::table.filter(id.eq(info.id)))
+        .execute(&mut conn)
+        .await
+        .map_err(|e| AppError::err(500,e.to_string()))?;
+    Ok(Json(json!({
+        "code":200,
+        "msg":"删除成功"
     })))
 }
 

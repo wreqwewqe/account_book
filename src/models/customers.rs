@@ -15,7 +15,8 @@ pub struct Customer{
 pub struct QueryCustomer{
     pub pagenum:i64,
     pub pagesize:i64,
-    pub customer_name:Option<String>
+    pub customer_name:Option<String>,
+   
 }
 
 #[derive(Debug,serde::Deserialize,Insertable)]

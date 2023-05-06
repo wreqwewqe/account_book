@@ -4,6 +4,7 @@ use axum::{
     routing::{get, post,delete, Route},
     Router,
 };
+use tower_http::services::ServeDir;
 use config::{Share, AppError};
 use diesel::prelude::*;
 use diesel_async::{
@@ -14,6 +15,7 @@ use serde_json::json;
 use tokio::task::JoinHandle;
 use tower_http::{limit::RequestBodyLimitLayer, cors::Any};
 use std::{net::SocketAddr, time::Duration, collections::HashMap, sync::{Arc, Mutex}};
+
 mod methods;
 
 mod schema;
@@ -38,6 +40,9 @@ async fn main() {
 
     let auth_routes=Router::new()
         .route("/users/info",post(handler::users::currentUserInfo))
+        .route("/users/update",post(handler::users::update_user))
+        .route("/users/upload",post(handler::users::upload))
+        .route("/:filename",get(handler::users::get_avatar))
         .route("/customer/create",post(handler::customers::create_customer))
         .route("/customer/list",post(handler::customers::customer_list))
         .route("/customer/update",post(handler::customers::update_customer))
@@ -45,6 +50,7 @@ async fn main() {
         .route("/orders/create",post(handler::orders::create))
         .route("/orders/update",post(handler::orders::update))
         .route("/orders/list",post(handler::orders::list))
+        .route("/orders/delete",post(handler::orders::delete))
         // .route("/test",post(handler::orders::test))
         .layer(axum::middleware::from_fn(middleware::auth));
 

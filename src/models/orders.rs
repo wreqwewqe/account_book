@@ -53,3 +53,8 @@ pub struct QueryOrder{
     pub customer_name:Option<String>,
     pub status:Option<bool>
 }
+
+#[derive(Debug,serde::Deserialize)]
+pub struct DeleteOrder{
+    pub id:i32
+}

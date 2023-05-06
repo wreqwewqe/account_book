@@ -33,3 +33,10 @@ pub struct Login{
 pub struct CurrentUserInfo{
     pub parent_uuid:String
 }
+
+#[derive(Debug,serde::Deserialize)]
+pub struct UpdateUser{
+    pub uuid:String,
+    pub username:String,
+    pub password:String
+}

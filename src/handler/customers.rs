@@ -11,7 +11,7 @@ use diesel::prelude::*;
 use crate::config::AppError;
 use crate::Pool;
 use crate::methods::{get_connection, my_decode};
-use crate::schema::customers::{self, parent_uuid, id, customer_name, phone};
+use crate::schema::customers::{self, parent_uuid, id, customer_name, phone, total_debts};
 use crate::models::customers::{ CreateCustomer, Customer, UpdateCustomer, DeleteCustomer, QueryCustomer};
 pub async fn create_customer(State(pool): State<Pool>,Json(info):Json<CreateCustomer>)->Result<impl IntoResponse,AppError>{
     let mut conn=get_connection(&pool).await?;
@@ -81,12 +81,24 @@ pub async fn customer_list(TypedHeader(auth):TypedHeader<Authorization<Bearer>>,
             .execute(&mut conn)
             .await
             .map_err(|e| AppError::err(500,e.to_string()))?;
+    //算总欠款
+    let v=customers::table.select(total_debts)
+    .load::<Option<i32>>(&mut conn)
+    .await
+    .map_err(|e| AppError::err(500,e.to_string()))?;
+    let mut sum=0;
+    for i in v{
+        if let Some(i)=i{
+            sum+=i;
+        }
+    }
     Ok(Json(json!({
         "code":200,
         "msg":"请求成功",
         "data":{
             "lists":lists,
-            "total":count
+            "total":count,
+            "total_debts":sum
         }
     })))
 
