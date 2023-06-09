@@ -8,6 +8,7 @@ use crate::{config::AppError, methods::{get_connection, now}, models::users::{Cr
 use diesel::prelude::*;
 use uuid::Uuid;
 use crate::Pool;
+use crate::AppState;
 use diesel_async::{
     RunQueryDsl,
 };
@@ -18,8 +19,8 @@ pub struct Claims{
     pub password:String,
     pub exp:usize,
 }
-pub async fn create_user(State(pool): State<Pool>,Json(mut info):Json<CreateUser>)->Result<impl IntoResponse,AppError>{
-    let mut conn=get_connection(&pool).await?;
+pub async fn create_user(State(app_state):State<AppState>,Json(mut info):Json<CreateUser>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&app_state.pool).await?;
     info.uuid=Some(Uuid::new_v4().to_string());
     info.create_at=Some(now());
     let rows=diesel::insert_into(users::table)
@@ -34,9 +35,9 @@ pub async fn create_user(State(pool): State<Pool>,Json(mut info):Json<CreateUser
     })))
 }
 
-pub async fn login(State(pool): State<Pool>,Json(info):Json<Login>)->Result<impl IntoResponse,AppError>{
+pub async fn login(State(app_state):State<AppState>,Json(info):Json<Login>)->Result<impl IntoResponse,AppError>{
     println!("我收到了login请求");
-    let mut conn=get_connection(&pool).await?;
+    let mut conn=get_connection(&app_state.pool).await?;
     let user=users::table.filter(username.eq(info.username).and(password.eq(info.password)))
             .load::<User>(&mut conn)
             .await
@@ -66,14 +67,15 @@ pub async fn login(State(pool): State<Pool>,Json(info):Json<Login>)->Result<impl
 
 
 //获取当前用户的信息
-pub async fn currentUserInfo(State(pool):State<Pool>,Json(info):Json<CurrentUserInfo>)->Result<impl IntoResponse,AppError>{
-    let mut conn=get_connection(&pool).await?;
-    println!("连接建立成功");
+pub async fn current_user_info(State(app_state):State<AppState>,Json(info):Json<CurrentUserInfo>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&app_state.pool).await?;
+    println!("我来获取用户信息了");
     let res=users::table
         .filter(users::uuid.eq(info.parent_uuid))
         .first::<User>(&mut conn)
         .await
         .map_err(|e| AppError::err(500,e.to_string()))?;
+    println!("res.clone:{:?}",res);
     Ok(Json(json!({
         "code":200,
         "msg":"请求成功",
@@ -84,8 +86,8 @@ pub async fn currentUserInfo(State(pool):State<Pool>,Json(info):Json<CurrentUser
 }
 
 //更新用户信息
-pub async fn update_user(State(pool):State<Pool>,Json(info):Json<UpdateUser>)->Result<impl IntoResponse,AppError>{
-    let mut conn=get_connection(&pool).await?;
+pub async fn update_user(State(app_state):State<AppState>,Json(info):Json<UpdateUser>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&app_state.pool).await?;
     diesel::update(users::table.filter(users::uuid.eq(info.uuid)))
         .set((username.eq(info.username),password.eq(info.password)))
         .execute(&mut conn)
@@ -113,6 +115,9 @@ pub async fn upload(mut multipart: Multipart)->Result<impl IntoResponse, AppErro
 }
 
 pub async fn get_avatar(Path(filename):Path<String>)->Result<impl IntoResponse,AppError>{
+    println!("我获取");
+    File::create("1.txt").map_err(|e| AppError::err(500,e.to_string()))?;
+    println!("建立成功");
     let f=File::open("./src/assets/".to_string()+&filename+".jpg").map_err(|e| AppError::err(500,e.to_string()))?;
     println!("f:{:?}",f);
     let mut reader=BufReader::new(f);

@@ -10,11 +10,12 @@ use serde_json::json;
 use diesel::prelude::*;
 use crate::config::AppError;
 use crate::Pool;
+use crate::AppState;
 use crate::methods::{get_connection, my_decode};
 use crate::schema::customers::{self, parent_uuid, id, customer_name, phone, total_debts};
 use crate::models::customers::{ CreateCustomer, Customer, UpdateCustomer, DeleteCustomer, QueryCustomer};
-pub async fn create_customer(State(pool): State<Pool>,Json(info):Json<CreateCustomer>)->Result<impl IntoResponse,AppError>{
-    let mut conn=get_connection(&pool).await?;
+pub async fn create_customer(State(app_state):State<AppState>,Json(info):Json<CreateCustomer>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&app_state.pool).await?;
     diesel::insert_into(customers::table)
         .values(info)
         .execute(&mut conn)
@@ -26,8 +27,8 @@ pub async fn create_customer(State(pool): State<Pool>,Json(info):Json<CreateCust
     })))
 }
 
-pub async fn update_customer(State(pool):State<Pool>,Json(info):Json<UpdateCustomer>)->Result<impl IntoResponse,AppError>{
-    let mut conn=get_connection(&pool).await?;
+pub async fn update_customer(State(app_state):State<AppState>,Json(info):Json<UpdateCustomer>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&app_state.pool).await?;
    
     diesel::update(customers::table)
         .filter(id.eq(info.id))
@@ -41,8 +42,8 @@ pub async fn update_customer(State(pool):State<Pool>,Json(info):Json<UpdateCusto
     })))
 }
 
-pub async fn delete_customer(State(pool):State<Pool>,Json(info):Json<DeleteCustomer>)->Result<impl IntoResponse,AppError>{
-    let mut conn=get_connection(&pool).await?;
+pub async fn delete_customer(State(app_state):State<AppState>,Json(info):Json<DeleteCustomer>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&app_state.pool).await?;
     diesel::delete(customers::table.filter(id.eq(info.id)))
         .execute(&mut conn)
         .await
@@ -53,9 +54,9 @@ pub async fn delete_customer(State(pool):State<Pool>,Json(info):Json<DeleteCusto
     })))
 }
 
-pub async fn customer_list(TypedHeader(auth):TypedHeader<Authorization<Bearer>>,State(pool):State<Pool>,Json(info):Json<QueryCustomer>)->Result<impl IntoResponse,AppError>{
+pub async fn customer_list(TypedHeader(auth):TypedHeader<Authorization<Bearer>>,State(app_state):State<AppState>,Json(info):Json<QueryCustomer>)->Result<impl IntoResponse,AppError>{
     println!("我ccccc");
-    let mut conn=get_connection(&pool).await?;
+    let mut conn=get_connection(&app_state.pool).await?;
     let mut query=customers::table.into_boxed();
     //总数查询
     let mut count_query=customers::table.into_boxed();

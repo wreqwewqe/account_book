@@ -10,9 +10,9 @@ use crate::methods::{get_connection, now};
 use crate::models::orders::{CreateOrder, UpdateOrder, Order, QueryOrder, CountOrder, DeleteOrder};
 use crate::schema::customers::{self,customer_name};
 use crate::schema::orders::{self,id, amount,status,customer_id,create_at, remark};
-
-pub async fn create(State(pool):State<Pool>,Json(mut info):Json<CreateOrder>)->Result<impl IntoResponse,AppError>{
-    let mut conn=get_connection(&pool).await?;
+use crate::AppState;
+pub async fn create(State(app_state):State<AppState>,Json(mut info):Json<CreateOrder>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&app_state.pool).await?;
     info.create_at=Some(now());
     info.status=Some(true);
     let row=diesel::insert_into(orders::table)
@@ -27,9 +27,9 @@ pub async fn create(State(pool):State<Pool>,Json(mut info):Json<CreateOrder>)->R
 }
 
 
-pub async fn update(State(pool):State<Pool>,Json(info):Json<UpdateOrder>)->Result<impl IntoResponse,AppError>{
+pub async fn update(State(app_state):State<AppState>,Json(info):Json<UpdateOrder>)->Result<impl IntoResponse,AppError>{
     println!("我进来了");
-    let mut conn=get_connection(&pool).await?;
+    let mut conn=get_connection(&app_state.pool).await?;
     println!("info:{:?}",info);
     diesel::update(orders::table.filter(id.eq(info.id)))
         .set((amount.eq(info.amount),status.eq(info.status),remark.eq(info.remark)))
@@ -45,8 +45,8 @@ pub async fn update(State(pool):State<Pool>,Json(info):Json<UpdateOrder>)->Resul
 
 joinable!(orders -> customers(customer_id));
 allow_tables_to_appear_in_same_query!(orders,customers);
-pub async fn list(State(pool):State<Pool>,Json(info):Json<QueryOrder>)->Result<impl IntoResponse,AppError>{
-    let mut conn=get_connection(&pool).await?;
+pub async fn list(State(app_state):State<AppState>,Json(info):Json<QueryOrder>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&app_state.pool).await?;
     println!("我建立好了连接");
     let  mut query1=orders::table.into_boxed()
                     .left_join(customers::table)
@@ -85,8 +85,8 @@ pub async fn list(State(pool):State<Pool>,Json(info):Json<QueryOrder>)->Result<i
     })))
 }
 
-pub async fn delete(State(pool):State<Pool>,Json(info):Json<DeleteOrder>)->Result<impl IntoResponse,AppError>{
-    let mut conn=get_connection(&pool).await?;
+pub async fn delete(State(app_state):State<AppState>,Json(info):Json<DeleteOrder>)->Result<impl IntoResponse,AppError>{
+    let mut conn=get_connection(&app_state.pool).await?;
     let r=diesel::delete(orders::table.filter(id.eq(info.id)))
         .execute(&mut conn)
         .await
